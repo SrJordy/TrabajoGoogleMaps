@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -21,8 +22,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import WebService.Asynchtask;
+import WebService.WebService;
 
 public class MainActivity extends AppCompatActivity
         implements OnMapReadyCallback,
@@ -30,7 +34,7 @@ public class MainActivity extends AppCompatActivity
         Asynchtask {
 
     ArrayList<LatLng> marcadores=new ArrayList(6);
-    GoogleMap Map;
+    GoogleMap Mapi;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,15 +48,15 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
-        Map=googleMap;
+        Mapi=googleMap;
 
-        Map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        Map.getUiSettings().setZoomControlsEnabled(true);
+        Mapi.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        Mapi.getUiSettings().setZoomControlsEnabled(true);
 
        CameraUpdate camUpd1 =
                 CameraUpdateFactory
                         .newLatLngZoom(new LatLng(40.68911920777306, -74.04458623399685), 18);
-        Map.moveCamera(camUpd1);
+        Mapi.moveCamera(camUpd1);
 
         LatLng madrid = new LatLng(40.68911920777306, -74.04458623399685);
         CameraPosition camPos = new CameraPosition.Builder()
@@ -63,8 +67,8 @@ public class MainActivity extends AppCompatActivity
                 .build();
         CameraUpdate camUpd3 =
                 CameraUpdateFactory.newCameraPosition(camPos);
-        Map.animateCamera(camUpd3);
-        Map.setOnMapClickListener(this);
+        Mapi.animateCamera(camUpd3);
+        Mapi.setOnMapClickListener(this);
     }
 
     @Override
@@ -80,7 +84,7 @@ public class MainActivity extends AppCompatActivity
 
         marcador.position(latLng);
         marcador.title("Punto");
-        Map.addMarker(marcador);
+        Mapi.addMarker(marcador);
         //creo el array
 
         PolylineOptions lineas=new PolylineOptions();
@@ -92,11 +96,22 @@ public class MainActivity extends AppCompatActivity
         }
         lineas.width(8);
         lineas.color(Color.RED);
-        Map.addPolyline(lineas);
+        Mapi.addPolyline(lineas);
+
+        //MODIFICA ESTo para hacer esta vaina en la casa
+        Map<String, String> datos = new HashMap<String, String>();
+
+        datos.put("destinations","40.689474437854315,-74.044947065413");
+        datos.put("origins","40.68916326633521,-74.0447847917676");
+        datos.put("units","meters");
+        WebService ws= new
+                WebService("https://maps.googleapis.com/maps/api/distancematrix/json",
+                datos, this, MainActivity.this);
+        ws.execute("POST");
     }
 
     @Override
     public void processFinish(String result) throws JSONException {
-        
+        Log.i("RESULT",result);
     }
 }

@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity
         implements OnMapReadyCallback,
         GoogleMap.OnMapClickListener,
         Asynchtask {
-
     ArrayList<LatLng> marcadores=new ArrayList(6);
     GoogleMap Mapi;
     @Override
@@ -100,7 +99,7 @@ public class MainActivity extends AppCompatActivity
 
         //MODIFICA ESTo para hacer esta vaina en la casa
         Map<String, String> datos = new HashMap<String, String>();
-
+        datos.put("key","AIzaSyBdnZ0lGkW_vH2M6Au1SUqUkntR-mUvrNI");
         datos.put("destinations","40.689474437854315,-74.044947065413");
         datos.put("origins","40.68916326633521,-74.0447847917676");
         datos.put("units","meters");

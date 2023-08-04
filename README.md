@@ -1,4 +1,4 @@
 # TrabajoGoogleMaps
-![image](https://github.com/SrJordy/TrabajoGoogleMaps/assets/120031341/9b85b487-076f-4299-977d-7724418fb08f)
-![image](https://github.com/SrJordy/TrabajoGoogleMaps/assets/120031341/c0fda862-a070-4913-b498-a8594d78968d)
+![image](https://github.com/SrJordy/TrabajoGoogleMaps/assets/120031341/73d24271-589b-471f-a145-bedd8a70ce97)
+![image](https://github.com/SrJordy/TrabajoGoogleMaps/assets/120031341/c53366e8-28ff-4bf4-b260-3431ee8a12a5)
 

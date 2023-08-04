@@ -1,116 +1,130 @@
 package com.example.myapplication;
 
+import android.graphics.Color;
+import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.graphics.Color;
-import android.os.Bundle;
-import android.util.Log;
-import android.widget.Toast;
-
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import WebService.Asynchtask;
-import WebService.WebService;
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
+        GoogleMap.OnMapClickListener {
+    private GoogleMap Mapeo;
+    private PolylineOptions Lineas;
+    private ArrayList<MarkerOptions> Marcadores;
+    private Double TotDist = 0.00;
+    private TextView DatoDist;
+    private RequestQueue requestQueue;
 
-public class MainActivity extends AppCompatActivity
-        implements OnMapReadyCallback,
-        GoogleMap.OnMapClickListener,
-        Asynchtask {
-    ArrayList<LatLng> marcadores=new ArrayList(6);
-    GoogleMap Mapi;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        SupportMapFragment mapFragment = (SupportMapFragment)
-                getSupportFragmentManager()
-                        .findFragmentById(R.id.map);
+
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        DatoDist = findViewById(R.id.txtDist);
+
+        requestQueue = Volley.newRequestQueue(this);
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
-        Mapi=googleMap;
-
-        Mapi.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        Mapi.getUiSettings().setZoomControlsEnabled(true);
-
-       CameraUpdate camUpd1 =
-                CameraUpdateFactory
-                        .newLatLngZoom(new LatLng(40.68911920777306, -74.04458623399685), 18);
-        Mapi.moveCamera(camUpd1);
-
-        LatLng madrid = new LatLng(40.68911920777306, -74.04458623399685);
-        CameraPosition camPos = new CameraPosition.Builder()
-                .target(madrid)
-                .zoom(19)
-                .bearing(3) //noreste arriba
-                .tilt(20) //punto de vista de la cámara 70 grados
-                .build();
-        CameraUpdate camUpd3 =
-                CameraUpdateFactory.newCameraPosition(camPos);
-        Mapi.animateCamera(camUpd3);
-        Mapi.setOnMapClickListener(this);
+        Mapeo = googleMap;
+        Mapeo.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        Mapeo.getUiSettings().setZoomControlsEnabled(true);
+        CameraUpdate camUpd1 = CameraUpdateFactory.newLatLngZoom(new LatLng(40.6898, -74.0448), 18);
+        Mapeo.moveCamera(camUpd1);
+        Marcadores = new ArrayList<>();
+        Mapeo.setOnMapClickListener(this);
     }
 
     @Override
     public void onMapClick(@NonNull LatLng latLng) {
-        LatLng punto = new LatLng(latLng.latitude,
-                latLng.longitude);
-        MarkerOptions marcador=new MarkerOptions();
-
-        marcadores.add(punto);
-        Log.i("Marcador",marcadores.toString());
-
-        //dar los datos
-
+        LatLng punto = new LatLng(latLng.latitude, latLng.longitude);
+        MarkerOptions marcador = new MarkerOptions();
         marcador.position(latLng);
         marcador.title("Punto");
-        Mapi.addMarker(marcador);
-        //creo el array
 
-        PolylineOptions lineas=new PolylineOptions();
-        if (marcadores.size()==6){
-            for (int i=0; i<marcadores.size();i++){
-                lineas.add(marcadores.get(i));
+        Mapeo.addMarker(marcador);
+        Marcadores.add(marcador);
+
+        if (Marcadores.size() == 6) {
+            Lineas = new PolylineOptions();
+
+            for (int i = 0; i < Marcadores.size(); i++) {
+                Lineas.add(Marcadores.get(i).getPosition());
+                LatLng origen = Marcadores.get(i).getPosition();
+                LatLng destino = Marcadores.get((i + 1) % Marcadores.size()).getPosition();
+                TotDist = 0.00;
+                ConectWBS(origen, destino);
             }
-            lineas.add(marcadores.get(0));
+            Lineas.add(Marcadores.get(0).getPosition());
+            Lineas.width(8);
+            Lineas.color(Color.GREEN);
+            Mapeo.addPolyline(Lineas);
+            Marcadores.clear();
         }
-        lineas.width(8);
-        lineas.color(Color.RED);
-        Mapi.addPolyline(lineas);
-
-        //MODIFICA ESTo para hacer esta vaina en la casa
-        Map<String, String> datos = new HashMap<String, String>();
-        datos.put("key","AIzaSyBdnZ0lGkW_vH2M6Au1SUqUkntR-mUvrNI");
-        datos.put("destinations","40.689474437854315,-74.044947065413");
-        datos.put("origins","40.68916326633521,-74.0447847917676");
-        datos.put("units","meters");
-        WebService ws= new
-                WebService("https://maps.googleapis.com/maps/api/distancematrix/json",
-                datos, this, MainActivity.this);
-        ws.execute("POST");
     }
 
-    @Override
-    public void processFinish(String result) throws JSONException {
-        Log.i("RESULT",result);
+    private void ConectWBS(LatLng Origin, LatLng Destin) {
+        String origen = "origins=" + Origin.latitude + "," + Origin.longitude;
+        String destinos = "destinations=" + Destin.latitude + "%2C" + Destin.longitude;
+        String url = "https://maps.googleapis.com/maps/api/distancematrix/json?units=meters&"
+                + origen + "&"
+                + destinos + "&key=AIzaSyD0ONVovLBMhzWI2nU0XEkJguQO-y_cJrI";
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray jArrayFila = response.getJSONArray("rows");
+                            JSONObject jObjectElementos = jArrayFila.getJSONObject(0);
+                            JSONArray jArrayElemento = jObjectElementos.getJSONArray("elements");
+
+                            for (int i = 0; i < jArrayElemento.length(); i++) {
+                                JSONObject jObjectDistancia = jArrayElemento.getJSONObject(i);
+                                JSONObject Distancia = jObjectDistancia.getJSONObject("distance");
+                                TotDist += Double.parseDouble(Distancia.getString("value"));
+                            }
+                            DatoDist.setText("La distancia es: " + TotDist.toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        requestQueue.add(request);
     }
 }
